@@ -48,6 +48,8 @@ public class guiHandler {
                     }
                 }
 
+                MekanicaCore.transactionInventory.put(ID, false);
+
                 updateStirlingGUI(GUI, ID);
 
                 return GUI;
@@ -75,65 +77,69 @@ public class guiHandler {
             @Override
             public void run(){
 
-                GUI.setItem(19, stirlingConfigData.getItem(ID));
-                //sets the item/fuel in the correct slot
+                if (MekanicaCore.transactionInventory.containsKey(ID)) {
+                    if (!(MekanicaCore.transactionInventory.get(ID))) {
 
-                int RF = stirlingConfigData.getRF(ID);
-                //gets RF from config
+                        GUI.setItem(19, stirlingConfigData.getItem(ID));
+                        //sets the item/fuel in the correct slot
 
-                if (RF > 0) {
+                        int RF = stirlingConfigData.getRF(ID);
+                        //gets RF from config
 
-                    enchantedGreenPaneMeta.setDisplayName(translateAlternateColorCodes('&', "&3&lRF: &r&l") + stirlingConfigData.getRF(ID));
-                    enchantedGreenPane.setItemMeta(enchantedGreenPaneMeta);
+                        if (RF > 0) {
 
-                    if (RF <= 75000) {
-                        GUI.setItem(8, redPane);
+                            enchantedGreenPaneMeta.setDisplayName(translateAlternateColorCodes('&', "&3&lRF: &r&l") + stirlingConfigData.getRF(ID));
+                            enchantedGreenPane.setItemMeta(enchantedGreenPaneMeta);
 
-                        if (RF <= 50000) {
-                            GUI.setItem(17, redPane);
+                            if (RF <= 75000) {
+                                GUI.setItem(8, redPane);
 
-                            if (RF <= 25000) {
-                                GUI.setItem(26, redPane);
-                                GUI.setItem(35, enchantedGreenPane);
+                                if (RF <= 50000) {
+                                    GUI.setItem(17, redPane);
 
-                            } else if (RF > 25000) {
-                                GUI.setItem(26, enchantedGreenPane);
+                                    if (RF <= 25000) {
+                                        GUI.setItem(26, redPane);
+                                        GUI.setItem(35, enchantedGreenPane);
+
+                                    } else if (RF > 25000) {
+                                        GUI.setItem(26, enchantedGreenPane);
+                                        GUI.setItem(35, greenPane);
+                                    }
+
+                                } else if (RF > 50000) {
+
+                                    GUI.setItem(17, enchantedGreenPane);
+                                    GUI.setItem(26, greenPane);
+                                    GUI.setItem(35, greenPane);
+                                }
+                            } else if (RF > 75000) {
+
+                                GUI.setItem(8, enchantedGreenPane);
+                                GUI.setItem(17, greenPane);
+                                GUI.setItem(26, greenPane);
                                 GUI.setItem(35, greenPane);
                             }
-
-                        } else if (RF > 50000) {
-
-                            GUI.setItem(17, enchantedGreenPane);
-                            GUI.setItem(26, greenPane);
-                            GUI.setItem(35, greenPane);
+                        } else {
+                            GUI.setItem(8, redPane);
+                            GUI.setItem(17, redPane);
+                            GUI.setItem(26, redPane);
+                            GUI.setItem(35, redPane);
                         }
-                    } else if (RF > 75000) {
+                        //this function sets the RF meter on the right side of the UI
 
-                        GUI.setItem(8, enchantedGreenPane);
-                        GUI.setItem(17, greenPane);
-                        GUI.setItem(26, greenPane);
-                        GUI.setItem(35, greenPane);
+                        Boolean burning = stirlingConfigData.getBurning(ID);
+                        if (burning) {
+                            GUI.setItem(14, blazePowder);
+                        } else {
+                            GUI.setItem(14, lightGrayPane);
+                        }
+                        //this gets the status of the generator
                     }
                 } else {
-                    GUI.setItem(8, redPane);
-                    GUI.setItem(17, redPane);
-                    GUI.setItem(26, redPane);
-                    GUI.setItem(35, redPane);
+                    this.cancel();
                 }
-                //this function sets the RF meter on the right side of the UI
-
-                Boolean burning = stirlingConfigData.getBurning(ID);
-                if (burning){
-                    GUI.setItem(14, blazePowder);
-                } else {
-                    GUI.setItem(14, lightGrayPane);
-                }
-                //this gets the status of the generator
-
-
-
             }
-        }.runTaskTimerAsynchronously(MekanicaCore.getInstance(), 0, 100);
+        }.runTaskTimerAsynchronously(MekanicaCore.getInstance(), 5, 60);
 
     }
 
