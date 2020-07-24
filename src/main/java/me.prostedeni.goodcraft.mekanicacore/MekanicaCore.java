@@ -1,5 +1,6 @@
 package me.prostedeni.goodcraft.mekanicacore;
 
+import com.google.common.collect.Maps;
 import me.prostedeni.goodcraft.mekanicacore.configFiles.conduitConfigData;
 import me.prostedeni.goodcraft.mekanicacore.configFiles.stirlingConfigData;
 import me.prostedeni.goodcraft.mekanicacore.recipes.recipeLoader;
@@ -7,25 +8,22 @@ import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Directional;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.inventory.InventoryAction;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.inventory.InventoryInteractEvent;
+import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import static org.bukkit.event.inventory.InventoryAction.*;
+import static me.prostedeni.goodcraft.mekanicacore.getItem.getIDpane;
 
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -37,11 +35,15 @@ public final class MekanicaCore extends JavaPlugin implements Listener {
         return instance;
     }
 
-
     public static int getRandomIntegerBetweenRange(int min, int max){
         return ThreadLocalRandom.current().nextInt(min, max + 1);
     }
     //method of generating random ints
+
+    public static HashMap<String, Boolean> transactionInventory = new HashMap<>();
+    //HashMap for storing ID of inventory, if its being saved and if its open
+    //0 == not being saved, open
+    //1 == being saved, open
 
     @Override
     public void onEnable() {
@@ -150,29 +152,115 @@ public final class MekanicaCore extends JavaPlugin implements Listener {
         }
     }
 
-
-    @EventHandler(priority = EventPriority.HIGH)
-    public void invMove(InventoryClickEvent e){
-        if (!(e.getWhoClicked() instanceof Player)){
-            return;
-        }
+    @EventHandler(priority = EventPriority.LOW)
+    public void invMove(InventoryClickEvent e) {
         String invTitle = ChatColor.stripColor(e.getView().getTitle());
         if (invTitle.equals("Stirling Generator")){
-            if (!(e.getWhoClicked().getInventory().equals(e.getClickedInventory()))){
-                if (e.getRawSlot() == 19){
 
-                    stirlingConfigData.setItem(e.getClickedInventory().getItem(19), getItem.getIDpane(e.getClickedInventory().getItem(0)));
-                    stirlingConfigData.setItem(e.getClickedInventory().getItem(19), getItem.getIDpane(e.getClickedInventory().getItem(0)));
+            if (e.getClick() == ClickType.SHIFT_LEFT || e.getClick() == ClickType.SHIFT_RIGHT){
 
-                    Bukkit.broadcastMessage(getItem.getIDpane(e.getClickedInventory().getItem(0)));
+                try {
+                    String ID = getIDpane(e.getView().getTopInventory().getItem(0));
 
-                } else {
-                    e.setCancelled(true);
+                    if (transactionInventory.containsKey(ID)){
+
+                        if (e.getClickedInventory().equals(e.getView().getBottomInventory())) {
+
+                            transactionInventory.put(ID, true);
+                            new BukkitRunnable() {
+
+                                @Override
+                                public void run() {
+                                    stirlingConfigData.setItem(e.getView().getTopInventory().getItem(19), ID);
+                                    if (transactionInventory.containsKey(ID)) {
+                                        transactionInventory.put(ID, false);
+                                    }
+                                }
+                            }.runTaskLaterAsynchronously(this, 3);
+
+                        } else if (e.getClickedInventory().equals(e.getView().getTopInventory())){
+                            if (e.getRawSlot() == 19){
+
+                                transactionInventory.put(ID, true);
+                                new BukkitRunnable() {
+
+                                    @Override
+                                    public void run() {
+                                        stirlingConfigData.setItem(e.getView().getTopInventory().getItem(19), ID);
+                                        if (transactionInventory.containsKey(ID)) {
+                                            transactionInventory.put(ID, false);
+                                        }
+                                    }
+                                }.runTaskLaterAsynchronously(this, 3);
+
+                            } else {
+                                e.setCancelled(true);
+                            }
+                        }
+                    }
+
+                } catch (NullPointerException err){
+                    //nothing
+                }
+            } else {
+
+                if (Objects.requireNonNull(e.getClickedInventory()).getItem(0) != null) {
+
+                    try {
+
+                        String ID = getIDpane(e.getClickedInventory().getItem(0));
+                        if (transactionInventory.containsKey(ID)) {
+                            //checks if the open inventory is in hashmap of open inventories
+
+                            if (!(e.getWhoClicked().getInventory().equals(e.getClickedInventory()))) {
+                                if (e.getRawSlot() == 19) {
+
+                                    transactionInventory.put(ID, true);
+                                    new BukkitRunnable() {
+
+                                        @Override
+                                        public void run() {
+                                            stirlingConfigData.setItem(e.getClickedInventory().getItem(19), ID);
+                                            if (transactionInventory.containsKey(ID)) {
+                                                transactionInventory.put(ID, false);
+                                            }
+                                        }
+                                    }.runTaskLaterAsynchronously(this, 3);
+
+                                } else {
+                                    e.setCancelled(true);
+                                }
+                            }
+                        }
+                    } catch (NullPointerException err) {
+                        //nothing
+                    }
                 }
             }
         }
     }
     //this event handles items in generators and machines
 
+    @EventHandler
+    public void invClose(InventoryCloseEvent e){
+        String invTitle = ChatColor.stripColor(e.getView().getTitle());
+        if (invTitle.equals("Stirling Generator")) {
+            try {
+                if (!(e.getInventory().equals(e.getViewers().get(0).getInventory()))) {
+                    if (e.getInventory().getItem(0) != null){
+                        if (e.getInventory().getItem(0).hasItemMeta()) {
+                            String ID = getIDpane(e.getInventory().getItem(0));
 
+                            if (transactionInventory.containsKey(ID)){
+                                transactionInventory.remove(ID);
+                            }
+                        }
+                    }
+                }
+            } catch (NullPointerException err){
+                //nothing
+            }
+        }
+    }
+    //this event removes closed inventory from HashMap
 }
