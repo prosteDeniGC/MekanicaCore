@@ -1,0 +1,7 @@
+name: MekanicaCore
+version: ${project.version}
+main: me.prostedeni.goodcraft.mekanicacore.MekanicaCore
+api-version: 1.13
+commands:
+  mget:
+    description: command used to get items from MekanicaCore
