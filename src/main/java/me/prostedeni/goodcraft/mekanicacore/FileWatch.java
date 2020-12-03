@@ -1,6 +1,6 @@
 package me.prostedeni.goodcraft.mekanicacore;
 
-import me.prostedeni.goodcraft.mekanicacore.configFiles.Configuration.MainConfig;
+import me.prostedeni.goodcraft.mekanicacore.configFiles.Configuration.JarReloaderConfig;
 import org.bukkit.Bukkit;
 
 import java.io.File;
@@ -22,23 +22,38 @@ public class FileWatch {
 
     private static Date newJarDate;
 
-    MainConfig mainConfig = new MainConfig();
+    JarReloaderConfig mainConfig = new JarReloaderConfig();
 
     public void InitiateCheck() throws IOException {
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&aSearching for PlugMan"));
         if (Bukkit.getServer().getPluginManager().isPluginEnabled("PlugMan")){
             Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&aFound PlugMan"));
 
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    try {
-                        JarReloadCheck();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+            if (mainConfig.get().get("JarReloadCheck") != null) {
+                if (mainConfig.get().getBoolean("JarReloadCheck")) {
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                JarReloadCheck();
+                            } catch (IOException e) {
+
+                            }
+                        }
+                    }.runTaskTimerAsynchronously(MekanicaCore.getInstance(), 100, 200);
                 }
-            }.runTaskTimerAsynchronously(MekanicaCore.getInstance(), 100, 200);
+            } else {
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            JarReloadCheck();
+                        } catch (IOException e) {
+
+                        }
+                    }
+                }.runTaskTimerAsynchronously(MekanicaCore.getInstance(), 100, 200);
+            }
         } else {
             Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&aDid not find plugman"));
         }
@@ -131,14 +146,14 @@ public class FileWatch {
 
                     JarDate = newJarDate;
                     mainConfig.get().set("JarDate", JarDate);
-                    MainConfig.saveSynchronously();
+                    JarReloaderConfig.saveSynchronously();
 
                     reloadCall();
                 }
             } else {
                 JarDate = newJarDate;
                 mainConfig.get().set("JarDate", JarDate);
-                MainConfig.saveSynchronously();
+                JarReloaderConfig.saveSynchronously();
             }
 
         }

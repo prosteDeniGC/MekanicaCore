@@ -3,7 +3,7 @@ package me.prostedeni.goodcraft.mekanicacore;
 import me.prostedeni.goodcraft.mekanicacore.calculations.BurnFuel;
 import me.prostedeni.goodcraft.mekanicacore.calculations.PassRF;
 import me.prostedeni.goodcraft.mekanicacore.calculations.UseEnergy;
-import me.prostedeni.goodcraft.mekanicacore.configFiles.Configuration.MainConfig;
+import me.prostedeni.goodcraft.mekanicacore.configFiles.Configuration.JarReloaderConfig;
 import me.prostedeni.goodcraft.mekanicacore.configFiles.Machines.furnaceConfigData;
 import me.prostedeni.goodcraft.mekanicacore.configFiles.Systems.conduitConfigData;
 import me.prostedeni.goodcraft.mekanicacore.configFiles.Generators.stirlingConfigData;
@@ -60,8 +60,8 @@ public final class MekanicaCore extends JavaPlugin implements Listener {
         furnaceConfigData.configSetup();
         furnaceConfigData.save();
 
-        MainConfig.configSetup();
-        MainConfig.save();
+        JarReloaderConfig.configSetup();
+        JarReloaderConfig.save();
         //these generate data files if they don't exist
 
         Bukkit.resetRecipes();
@@ -112,7 +112,7 @@ public final class MekanicaCore extends JavaPlugin implements Listener {
             conduitConfigData.saveSynchronously();
             stirlingConfigData.saveSynchronously();
             furnaceConfigData.saveSynchronously();
-            MainConfig.saveSynchronously();
+            JarReloaderConfig.saveSynchronously();
         } catch (IOException e) {
             e.printStackTrace();
         }
